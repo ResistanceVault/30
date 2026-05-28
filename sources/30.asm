@@ -243,7 +243,8 @@ extra_pf5_depth			EQU 3
 extra_pf6_x_size		EQU 320
 extra_pf6_y_size		EQU 182
 extra_pf6_depth			EQU 3
-; Viewport 3 
+; Viewport 3
+; Playfield 1
 extra_pf7_x_size		EQU 960
 extra_pf7_y_size		EQU 1
 extra_pf7_depth			EQU 2
@@ -381,16 +382,20 @@ extra_pf8_plane_width		EQU extra_pf8_x_size/8
 
 
 ; Viewport 1 
+vp1_pf1_plane_width		EQU extra_pf1_plane_width
 vp1_data_fetch_width		EQU vp1_pixel_per_line/8
-vp1_pf1_plane_moduli		EQU (extra_pf1_plane_width*(extra_pf1_depth-1))+extra_pf1_plane_width-vp1_data_fetch_width
+vp1_pf1_plane_moduli		EQU (vp1_pf1_plane_width*(vp1_pf1_depth-1))+vp1_pf1_plane_width-vp1_data_fetch_width
 ; Viewport 2
+vp2_pf1_plane_width		EQU extra_pf3_plane_width
+vp2_pf2_plane_width		EQU extra_pf4_plane_width
 vp2_data_fetch_width		EQU vp2_pixel_per_line/8
-vp2_pf1_plane_moduli		EQU (extra_pf3_plane_width*(extra_pf3_depth-1))+extra_pf3_plane_width-vp2_data_fetch_width
-vp2_pf2_plane_moduli		EQU (extra_pf4_plane_width*(extra_pf4_depth-1))+extra_pf4_plane_width-vp2_data_fetch_width
+vp2_pf1_plane_moduli		EQU (vp2_pf1_plane_width*(vp2_pf1_depth-1))+vp2_pf1_plane_width-vp2_data_fetch_width
+vp2_pf2_plane_moduli		EQU (vp2_pf2_plane_width*(vp2_pf2_depth-1))+vp2_pf2_plane_width-vp2_data_fetch_width
 ; Viewport 3
+vp3_pf2_plane_width		EQU extra_pf8_plane_width
 vp3_data_fetch_width		EQU vp3_pixel_per_line/8
 vp3_pf1_plane_moduli		EQU vp3_data_fetch_width*8
-vp3_pf2_plane_moduli		EQU (extra_pf8_plane_width*(extra_pf8_depth-1))+extra_pf8_plane_width-vp3_data_fetch_width
+vp3_pf2_plane_moduli		EQU (vp3_pf2_plane_width*(vp3_pf2_depth-1))+vp3_pf2_plane_width-vp3_data_fetch_width
 
 
 ; View 
@@ -476,7 +481,7 @@ bg2_image_depth			EQU 4
 
 ; Ball-Image 
 mvb_image_x_size		EQU 16
-mvb_image_width			EQU mvb_image_x_size/8
+mvb_image_plane_width		EQU mvb_image_x_size/8
 mvb_image_y_size		EQU 11
 mvb_image_depth			EQU 3
 mvb_image_objects_number	EQU 4
@@ -540,7 +545,7 @@ mvb_z_plane4			EQU 64+mvb_observer_z
 mvb_clear_blit_x_size		EQU extra_pf4_x_size
 mvb_clear_blit_y_size		EQU extra_pf4_y_size*(extra_pf4_depth-2)
 
-mvb_copy_blit_x_size		EQU mvb_image_x_size+16
+mvb_copy_blit_x_size		EQU mvb_image_x_size+WORD_BITS
 mvb_copy_blit_y_size		EQU mvb_image_y_size*mvb_image_depth
 
 ; Chessboard 
@@ -741,10 +746,10 @@ cl2_extension1_size		RS.B 0
 cl2_extension2			RS.B 0
 
 cl2_ext2_WAIT			RS.L 1
-cl2_ext2_BPLCON3_1		RS.L 1
+cl2_ext2_BPLCON3_colormap_high8	RS.L 1
 cl2_ext2_COLOR29_high8		RS.L 1
 cl2_ext2_COLOR30_high8		RS.L 1
-cl2_ext2_BPLCON3_2		RS.L 1
+cl2_ext2_BPLCON3_colormap_low8	RS.L 1
 cl2_ext2_COLOR29_low8		RS.L 1
 cl2_ext2_COLOR30_low8		RS.L 1
 cl2_ext2_BPLCON4		RS.L 1
@@ -813,10 +818,10 @@ cl2_extension4_size		RS.B 0
 cl2_extension5			RS.B 0
 
 cl2_ext5_WAIT			RS.L 1
-cl2_ext5_BPLCON3_1		RS.L 1
+cl2_ext5_BPLCON3_colormap_high8	RS.L 1
 cl2_ext5_COLOR25_high8		RS.L 1
 cl2_ext5_COLOR26_high8		RS.L 1
-cl2_ext5_BPLCON3_2		RS.L 1
+cl2_ext5_BPLCON3_colormap_low8	RS.L 1
 cl2_ext5_COLOR25_low8		RS.L 1
 cl2_ext5_COLOR26_low8		RS.L 1
 cl2_ext5_NOOP			RS.L 1
@@ -1078,7 +1083,7 @@ vp1_pf1_construction2		RS.L 1
 vp1_pf1_display			RS.L 1
 
 ; Viewport 2 
-vp2_pf2_construction1		RS.L 1
+vp2_pf2_construction1		RS.L 1	; tripple buffer
 vp2_pf2_construction2		RS.L 1
 vp2_pf2_display			RS.L 1
 
@@ -1538,10 +1543,10 @@ cb_init_color_tables_loop2
 	CNOP 0,4
 init_colors
 	CPU_SELECT_COLOR_HIGH_BANK 7
-	CPU_INIT_COLOR_HIGH COLOR16,8,vp3_pf1_rgb8_color_table
+	CPU_LOAD_COLORMAP_HIGH COLOR16,8,vp3_pf1_rgb8_color_table
 
 	CPU_SELECT_COLOR_LOW_BANK 7
-	CPU_INIT_COLOR_LOW COLOR16,8,vp3_pf1_rgb8_color_table
+	CPU_LOAD_COLORMAP_LOW COLOR16,8,vp3_pf1_rgb8_color_table
 	rts
 
 
@@ -1575,7 +1580,6 @@ cl1_init_copperlist
 	bsr	cl1_vp2_init_plane_pointers
 	COP_MOVEQ 0,COPJMP2
 	bsr	cl1_set_sprite_pointers
-
 	bsr	cl1_vp2_pf1_set_plane_pointers
 	rts
 
@@ -1585,42 +1589,42 @@ cl1_init_copperlist
 
 	CNOP 0,4
 cl1_init_colors
-	COP_INIT_COLOR_HIGH COLOR00,16,vp2_pf1_rgb8_color_table
-	COP_INIT_COLOR_HIGH COLOR16,16,vp2_pf2_rgb8_color_table
+	COP_LOAD_COLORMAP_HIGH COLOR00,16,vp2_pf1_rgb8_color_table
+	COP_LOAD_COLORMAP_HIGH COLOR16,16,vp2_pf2_rgb8_color_table
 	COP_SELECT_COLOR_HIGH_BANK 1
-	COP_INIT_COLOR_HIGH COLOR00,16,spr_rgb8_color_table
-	COP_INIT_COLOR_HIGH COLOR16,16,bvm_rgb8_color_table
+	COP_LOAD_COLORMAP_HIGH COLOR00,16,spr_rgb8_color_table
+	COP_LOAD_COLORMAP_HIGH COLOR16,16,bvm_rgb8_color_table
 	COP_SELECT_COLOR_HIGH_BANK 2
-	COP_INIT_COLOR_HIGH COLOR00,32
+	COP_LOAD_COLORMAP_HIGH COLOR00,32
 	COP_SELECT_COLOR_HIGH_BANK 3
-	COP_INIT_COLOR_HIGH COLOR00,32
+	COP_LOAD_COLORMAP_HIGH COLOR00,32
 	COP_SELECT_COLOR_HIGH_BANK 4
-	COP_INIT_COLOR_HIGH COLOR00,32
+	COP_LOAD_COLORMAP_HIGH COLOR00,32
 	COP_SELECT_COLOR_HIGH_BANK 5
-	COP_INIT_COLOR_HIGH COLOR00,32
+	COP_LOAD_COLORMAP_HIGH COLOR00,32
 	COP_SELECT_COLOR_HIGH_BANK 6
-	COP_INIT_COLOR_HIGH COLOR00,32
+	COP_LOAD_COLORMAP_HIGH COLOR00,32
 	COP_SELECT_COLOR_HIGH_BANK 7
-	COP_INIT_COLOR_HIGH COLOR00,16
+	COP_LOAD_COLORMAP_HIGH COLOR00,16
 
 	COP_SELECT_COLOR_LOW_BANK 0
-	COP_INIT_COLOR_LOW COLOR00,16,vp2_pf1_rgb8_color_table
-	COP_INIT_COLOR_LOW COLOR16,16,vp2_pf2_rgb8_color_table
+	COP_LOAD_COLORMAP_LOW COLOR00,16,vp2_pf1_rgb8_color_table
+	COP_LOAD_COLORMAP_LOW COLOR16,16,vp2_pf2_rgb8_color_table
 	COP_SELECT_COLOR_LOW_BANK 1
-	COP_INIT_COLOR_LOW COLOR00,16,spr_rgb8_color_table
-	COP_INIT_COLOR_LOW COLOR16,16,bvm_rgb8_color_table
+	COP_LOAD_COLORMAP_LOW COLOR00,16,spr_rgb8_color_table
+	COP_LOAD_COLORMAP_LOW COLOR16,16,bvm_rgb8_color_table
 	COP_SELECT_COLOR_LOW_BANK 2
-	COP_INIT_COLOR_LOW COLOR00,32
+	COP_LOAD_COLORMAP_LOW COLOR00,32
 	COP_SELECT_COLOR_LOW_BANK 3
-	COP_INIT_COLOR_LOW COLOR00,32
+	COP_LOAD_COLORMAP_LOW COLOR00,32
 	COP_SELECT_COLOR_LOW_BANK 4
-	COP_INIT_COLOR_LOW COLOR00,32
+	COP_LOAD_COLORMAP_LOW COLOR00,32
 	COP_SELECT_COLOR_LOW_BANK 5
-	COP_INIT_COLOR_LOW COLOR00,32
+	COP_LOAD_COLORMAP_LOW COLOR00,32
 	COP_SELECT_COLOR_LOW_BANK 6
-	COP_INIT_COLOR_LOW COLOR00,32
+	COP_LOAD_COLORMAP_LOW COLOR00,32
 	COP_SELECT_COLOR_LOW_BANK 7
-	COP_INIT_COLOR_LOW COLOR00,16
+	COP_LOAD_COLORMAP_LOW COLOR00,16
 	rts
 
 	CNOP 0,4
@@ -1688,7 +1692,6 @@ cl2_init_copperlist
 	bsr	vp2_pf2_set_playfield
 	rts
 
-
 ; Viewport 1 
 	COP_INIT_PLAYFIELD_REGISTERS cl2,,vp1
 
@@ -1734,7 +1737,6 @@ cl2_vp1_init_color_gradient_loop
 	dbf	d7,cl2_vp1_init_color_gradient_loop
 	rts
 
-
 ; Viewport 2
 	CNOP 0,4
 cl2_vp2_init_start_display
@@ -1755,7 +1757,6 @@ cl2_vp2_init_plane_pointers
 	COP_MOVEQ 0,BPL6PTL
 	COP_MOVEQ vp2_bplcon0_bits,BPLCON0
 	rts
-
 
 ; Viewport 3
 	CNOP 0,4
@@ -1810,9 +1811,7 @@ cl2_vp3_init_color_gradient_skip
 	dbf	d7,cl2_vp3_init_color_gradient_loop
 	rts
 
-
 	COP_INIT_COPINT cl2,cl2_hstart3,cl2_vstart3
-
 
 ; Viewport 1 
 	CNOP 0,4
@@ -1867,7 +1866,6 @@ cl2_vp1_set_outline_gradient_loop
 	dbf	d7,cl2_vp1_set_outline_gradient_loop
 	rts
 
-
 ; Viewport 2 
 	CNOP 0,4
 cl2_vp2_pf1_set_plane_pointers
@@ -1881,7 +1879,6 @@ cl2_vp2_pf1_set_plane_pointers_loop
 	move.w	(a1)+,LONGWORD_SIZE-QUADWORD_SIZE(a0) ; BPLxPTL
 	dbf	d7,cl2_vp2_pf1_set_plane_pointers_loop
 	rts
-
 
 ; Viewport 3 
 	CNOP 0,4
@@ -1909,7 +1906,6 @@ cl2_vp3_pf2_set_plane_pointers_loop
 	move.w	(a1)+,LONGWORD_SIZE-(QUADWORD_SIZE*2)(a0) ; BPLxPTL
 	dbf	d7,cl2_vp3_pf2_set_plane_pointers_loop
 	rts
-
 
 	COPY_COPPERLIST cl2,2
 
@@ -2630,11 +2626,11 @@ set_vector_balls_loop
 	blt.s	set_vector_balls_skip2
 	cmp.w	#mvb_z_plane3,d2	; 3rd z plane ?
 	blt.s	set_vector_balls_skip1
-	ADDF.W	mvb_image_width,d5
+	ADDF.W	mvb_image_plane_width,d5
 set_vector_balls_skip1
-	ADDF.W	mvb_image_width,d5
+	ADDF.W	mvb_image_plane_width,d5
 set_vector_balls_skip2
-	ADDF.W	mvb_image_width,d5
+	ADDF.W	mvb_image_plane_width,d5
 set_vector_balls_skip3
 	MULUF.W (extra_pf4_plane_width*extra_pf4_depth)/2,d1,d2
 	ror.l	#4,d0			; adjust shift bits
@@ -2666,8 +2662,8 @@ set_vector_balls_init
 	move.w	mvb_mask(a3),BLTAFWM-DMACONR(a6)
 	moveq	#0,d0
 	move.w	d0,BLTALWM-DMACONR(a6)
-	move.l	#((extra_pf4_plane_width-(mvb_image_width+2))<<16)|((mvb_image_width*mvb_image_objects_number)-(mvb_image_width+2)),BLTCMOD-DMACONR(a6) ; C&B moduli
-	move.l	#(((mvb_image_width*mvb_image_objects_number)-(mvb_image_width+2))<<16)|(extra_pf4_plane_width-(mvb_image_width+2)),BLTAMOD-DMACONR(a6) ; A&D moduli
+	move.l	#((extra_pf4_plane_width-(mvb_copy_blit_x_size/8))<<16)|((mvb_image_plane_width*mvb_image_objects_number)-(mvb_image_plane_width+WORD_SIZE)),BLTCMOD-DMACONR(a6) ; C&B moduli
+	move.l	#(((mvb_image_plane_width*mvb_image_objects_number)-(mvb_copy_blit_x_size/8))<<16)|(extra_pf4_plane_width-(mvb_image_plane_width+WORD_SIZE)),BLTAMOD-DMACONR(a6) ; A&D moduli
 	rts
 
 
@@ -2990,7 +2986,7 @@ rgb8_sprite_fader_in
 	ADDF.W	sprfi_rgb8_fader_angle_speed,d0
 	cmp.w	#sine_table_length/2,d0	; 180° ?
 	ble.s	rgb8_sprite_fader_in_skip
-	MOVEF.W sine_table_length/2,d0
+	MOVEF.W sine_table_length/2,d0	; 180°
 rgb8_sprite_fader_in_skip
 	move.w	d0,sprfi_rgb8_fader_angle(a3) 
 	MOVEF.W sprf_rgb8_colors_number*3,d6 ; RGB counter
@@ -3027,7 +3023,7 @@ rgb8_sprite_fader_out
 	ADDF.W	sprfo_rgb8_fader_angle_speed,d0
 	cmp.w	#sine_table_length/2,d0	; 180° ?
 	ble.s	rgb8_sprite_fader_out_skip
-	MOVEF.W sine_table_length/2,d0
+	MOVEF.W sine_table_length/2,d0	; 180°
 rgb8_sprite_fader_out_skip
 	move.w	d0,sprfo_rgb8_fader_angle(a3) 
 	MOVEF.W sprf_rgb8_colors_number*3,d6 ; RGB counter
@@ -3330,7 +3326,7 @@ pt_effects_handler
 	tst.w	pt_effects_handler_active(a3)
 	bne.s	pt_effects_handler_quit
 	move.b	n_cmdlo(a2),d0
-	lsr.b	#4,d0			; x
+	lsr.b	#4,d0
 	tst.w	pt_skip_commands_enabled(a3)
 	beq.s	pt_effects_handler_skip1
 	cmp.b	#$1,d0
